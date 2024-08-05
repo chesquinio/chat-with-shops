@@ -91,7 +91,7 @@ export default function Home() {
   ];
 
   return (
-    <main>
+    <main className="min-h-dvh">
       <div className="pb-8 pt-32">
         {messages.length ? <ChatList messages={messages} /> : <EmptyScreen />}
 
@@ -167,11 +167,16 @@ export default function Home() {
             {messages.length > 0 && (
               <div className="fixed md:hidden bottom-8 right-5">
                 <Button
-                  className="group bg-indigo-600 hover:bg-indigo-500 z-30 h-16 rounded-full"
+                  className="group bg-indigo-600 hover:bg-indigo-500 z-30 h-14 w-14 rounded-full"
                   onClick={() => openCart()}
                 >
                   <ShoppingCartIcon className="w-8 h-8 text-white" />
                 </Button>
+                {cartQuantity > 0 && (
+                  <span className="flex items-center justify-center absolute bg-red-500 rounded-full w-6 h-6 text-sm text-white -bottom-1 -right-1">
+                    {cartQuantity}
+                  </span>
+                )}
               </div>
             )}
           </div>
