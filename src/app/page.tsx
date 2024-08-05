@@ -1,5 +1,7 @@
 "use client";
 
+export const maxDuration = 30;
+
 import { ChatList } from "@ai-rsc/components/chat-list";
 import { UserMessage } from "@/components/ui/message";
 import { Button } from "@ai-rsc/components/ui/button";
@@ -80,7 +82,7 @@ export default function Home() {
       message: `Muestrame todos los productos de Caramelos`,
     },
     {
-      message: `Dónde se encuentra el Vino Rosado más económica?`,
+      message: `Dónde se encuentra el Vino más económica?`,
     },
     {
       message: `Quiero el listado de Cervezas en La Anónima`,
