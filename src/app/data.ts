@@ -34,7 +34,7 @@ const shops: Shop[] = [
       const data = JSON.parse(queryData[0].data);
 
       const productDetails = data.productSearch.products;
-      const limitedProductDetails = productDetails.slice(0, 16);
+      const limitedProductDetails = productDetails.slice(0, 12);
 
       const products = limitedProductDetails.map((product: any) => {
         const title = product.productName;
@@ -65,7 +65,7 @@ const shops: Shop[] = [
       const { data } = await axiosInstance.get(completeUrl);
       const $ = cheerio.load(data);
 
-      const content = $(".item-prod").slice(0, 16);
+      const content = $(".item-prod").slice(0, 12);
 
       const products = content
         .map((i, product) => {
@@ -118,7 +118,7 @@ const shops: Shop[] = [
 
       const $ = cheerio.load(response);
 
-      const content = $("div.caja1.producto div.producto.item").slice(0, 16);
+      const content = $("div.caja1.producto div.producto.item").slice(0, 12);
 
       const products = content
         .map((i, product) => {
@@ -179,7 +179,7 @@ const shops: Shop[] = [
       const $ = cheerio.load(response);
 
       const products = $(".ast-grid-common-col")
-        .slice(0, 16)
+        .slice(0, 12)
         .map((i, element) => {
           const title = $(element)
             .find(".woocommerce-loop-product__title")
