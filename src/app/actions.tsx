@@ -190,12 +190,13 @@ export async function sendMessage(message: string): Promise<{
                       Analyze the following products and answer what the product ${request} is for each store: ${JSON.stringify(
               productData
             )}.
-Analyze the prices of all the products in each store to determine what the ${request} is.
- You must respond with the product ${request} from each store, this is very important; of the 4 vendors, you cannot repeat any vendors, you can only show one product from each seller and a maximum of 4, and if possible it must always be this amount, even if you do not find products for any store. Take the price of
- each product into account to correctly determine the ${request} of each store. 
- Before drawing the conclusion, you should always analyze and save the product ${request} of each store; and then from these products, we can determine the ${request}. Do not draw a conclusion without knowing the price of all the products.
-If a store does not have the product in question, or it is not a product related to what the user ordered, do not consider that store.
- Always respond in Spanish.
+                      Analyze the prices of all products in each store to determine what the ${request} is.
+
+                      You must respond with the product ${request} from each store. This is very important. Among the 4 vendors, you cannot repeat any vendors; you can only show one product from each seller, with a maximum of 4 products. If possible, always aim to show 4 products, even if some stores do not have products that match the request. Consider the price of each product to correctly determine the ${request} from each store.
+
+                      Before drawing a conclusion, you should always analyze and save the product ${request} from each store. Then, from these products, we can determine the ${request}. Do not draw a conclusion without knowing the price of all the products. If a store does not have the requested product or it is not related to what the user ordered, do not consider that store.
+
+                      Always respond in Spanish.
                       `,
           });
 

@@ -82,7 +82,7 @@ export default function Home() {
       message: `Muestrame todos los productos de Caramelos`,
     },
     {
-      message: `Dónde se encuentra el Vino más económica?`,
+      message: `Dónde se encuentra el Vino Blanco más económica?`,
     },
     {
       message: `Quiero el listado de Cervezas en La Anónima`,
