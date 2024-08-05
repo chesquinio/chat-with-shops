@@ -128,9 +128,16 @@ export default function CartPanel() {
                                     onClick={() =>
                                       decreseCartQuantity(item.product.id)
                                     }
+                                    disabled={item.quantity < 2}
                                     className="flex items-center"
                                   >
-                                    <MinusIcon className="h-3 w-3" />
+                                    <MinusIcon
+                                      className={`h-3 w-3 ${
+                                        item.quantity < 2
+                                          ? "text-transparent"
+                                          : ""
+                                      }`}
+                                    />
                                   </button>
                                   <p className="text-gray-500 w-4 text-center">
                                     {item.quantity}
