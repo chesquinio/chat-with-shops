@@ -8,35 +8,6 @@ import {
 } from "@headlessui/react";
 import { MinusIcon, PlusIcon, XIcon } from "lucide-react";
 import { useCartContext } from "@/context/cart-context";
-import { Button } from "./button";
-
-const products = [
-  {
-    id: 1,
-    name: "Throwback Hip Bag",
-    href: "#",
-    color: "Salmon",
-    price: "$90.00",
-    quantity: 1,
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/shopping-cart-page-04-product-01.jpg",
-    imageAlt:
-      "Salmon orange fabric pouch with match zipper, gray zipper pull, and adjustable hip belt.",
-  },
-  {
-    id: 2,
-    name: "Medium Stuff Satchel",
-    href: "#",
-    color: "Blue",
-    price: "$32.00",
-    quantity: 1,
-    imageSrc:
-      "https://tailwindui.com/img/ecommerce-images/shopping-cart-page-04-product-02.jpg",
-    imageAlt:
-      "Front of satchel with blue canvas body, black straps and handle, drawstring top, and front zipper pouch.",
-  },
-  // More products...
-];
 
 export default function CartPanel() {
   const {
@@ -46,6 +17,7 @@ export default function CartPanel() {
     removeFromCart,
     increaseCartQuantity,
     decreseCartQuantity,
+    cartQuantity,
   } = useCartContext();
 
   function totalPrice() {
@@ -172,13 +144,21 @@ export default function CartPanel() {
                 </div>
 
                 <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
-                  <div className="flex justify-between text-base font-medium text-gray-900">
-                    <p>Total</p>
-                    <p>${totalPrice()}</p>
-                  </div>
-                  <p className="mt-0.5 text-sm text-gray-500">
-                    Cálculo estimativo del total de los productos.
-                  </p>
+                  {cartQuantity > 0 ? (
+                    <>
+                      <div className="flex justify-between text-base font-medium text-gray-900">
+                        <p>Total</p>
+                        <p>${totalPrice()}</p>
+                      </div>
+                      <p className="mt-0.5 text-sm text-gray-500">
+                        Cálculo estimativo del total de los productos.
+                      </p>
+                    </>
+                  ) : (
+                    <div>
+                      <span className="font-medium">No hay productos</span>
+                    </div>
+                  )}
                   <div className="mt-6 flex justify-center text-center text-sm text-gray-500">
                     <p>
                       <button
