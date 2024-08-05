@@ -1,241 +1,232 @@
-'use server';
+"use server";
 
-import { BotCard, BotMessage } from '@ai-rsc/components/llm-crypto/message';
-import { Price } from '@ai-rsc/components/llm-crypto/price';
-import { PriceSkeleton } from '@ai-rsc/components/llm-crypto/price-skeleton';
-import { Stats } from '@ai-rsc/components/llm-crypto/stats';
-import { StatsSkeleton } from '@ai-rsc/components/llm-crypto/stats-skeleton';
-import { env } from '@ai-rsc/env.mjs';
-import { openai } from '@ai-sdk/openai';
-import type { CoreMessage, ToolInvocation } from 'ai';
-import { createAI, getMutableAIState, streamUI } from 'ai/rsc';
-import { MainClient } from 'binance';
-import { Loader2 } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { z } from 'zod';
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const binance = new MainClient({
-  api_key: env.BINANCE_API_KEY,
-  api_secret: env.BINANCE_API_SECRET,
-});
-
-/* 
-  !-- The first implication of user interfaces being generative is that they are not deterministic in nature.
-  !-- This is because they depend on the generation output by the model. Since these generations are probabilistic 
-  !-- in nature, it is possible for every user query to result in a different user interface being generated.
-
-  !-- Users expect their experience using your application to be predictable, so non-deterministic user interfaces
-  !-- can sound like a bad idea at first. However, one way language models can be set up to limit their generations
-  !-- to a particular set of outputs is to use their ability to call functions, now called tool calling.
-
-  !-- When language models are provided with a set of function definitions, and instructed that it can choose to 
-  !-- execute any of them based on user query, it does either one of the following two things:
-
-  !-- 1. Execute a function that is most relevant to the user query.
-  !-- 2. Not execute any function if the user query is out of bounds the set of functions available to them.
-
-  !-- As you can see in the content variable below, we set the initial message so that the LLM understand what to do.
-  !-- We define a few tool names which allows the LLM to decide whether or not to call the function. Then, we ensure
-  !-- that the LLM understands that if the function is out of bounds of the set of functions available to them, they
-  !-- should respond that they are a demo and cannot do that. Besides that, the LLM can chat with users as normal.
-*/
-
+import { BotCard, BotMessage } from "@/components/ui/message";
+import { openai } from "@ai-sdk/openai";
+import { generateObject, type CoreMessage, type ToolInvocation } from "ai";
+import { createAI, getMutableAIState, streamUI } from "ai/rsc";
+import { Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
+import { z } from "zod";
+import { getAllProducts } from "./data";
+import ProductsList from "@/components/ui/products-list";
+import { ProductsListSkeleton } from "@/components/skeletons/products-list-sckeleton";
+import BetterProduct from "@/components/ui/better-product";
+import { BetterProductSkeleton } from "@/components/skeletons/better-product-sckeleton";
 
 const content = `\
-You are a crypto bot and you can help users get the prices of cryptocurrencies.
+  You are an assistant for choosing products, I want you to advise users where they should buy
+  Depending on the prices of the products provided to you, I want you to make different recommendations
+  depending on the brand or size of the product with respect to the price.
 
-Messages inside [] means that it's a UI element or a user event. For example:
-- "[Price of BTC = 69000]" means that the interface of the cryptocurrency price of BTC is shown to the user.
+  If the user wants see all the products, call \`show_all_products\` to show the products.
+  If the user wants know where buy the product cheapest or know something specific about a product e.g. where 
+  sell the Coca Cola cheapest., call \`analize_products\` to answer the question. Always you need a product name, 
+  if the user anwer for a cheapest product and don't put one, ask for a product name. Also, can ask for a specific brand if you want. Don't ask for a specific shop for this function.
 
-If the user wants the price, call \`get_crypto_price\` to show the price.
-If the user wants the market cap or other stats of a given cryptocurrency, call \`get_crypto_stats\` to show the stats.
-If the user wants a stock price, it is an impossible task, so you should respond that you are a demo and cannot do that.
-If the user wants to do anything else, it is an impossible task, so you should respond that you are a demo and cannot do that.
-
-Besides getting prices of cryptocurrencies, you can also chat with users.
-`;
-
+  Besides that, you can also chat with users and do some calculations if needed.`;
 export async function sendMessage(message: string): Promise<{
-  id: number,
-  role: 'user' | 'assistant',
+  id: number;
+  role: "user" | "assistant";
   display: ReactNode;
 }> {
+  const MAX_HISTORY_LENGTH = 2;
 
   const history = getMutableAIState<typeof AI>();
+  const messages = history.get();
+  const recentMessages = messages.slice(-MAX_HISTORY_LENGTH);
 
-  history.update([
-    ...history.get(),
-    {
-      role: 'user',
-      content: message,
-    },
-  ]);
+  history.update([...recentMessages, { role: "user", content: message }]);
 
   const reply = await streamUI({
-    model: openai('gpt-4o-2024-05-13'),
+    model: openai("gpt-3.5-turbo"),
     messages: [
       {
-        role: 'system',
+        role: "system",
         content,
-        toolInvocations: []
+        toolInvocations: [],
       },
       ...history.get(),
     ] as CoreMessage[],
     initial: (
-      <BotMessage className="items-center flex shrink-0 select-none justify-center">
+      <BotMessage className="flex shrink-0 select-none justify-center items-center mx-auto">
         <Loader2 className="h-5 w-5 animate-spin stroke-zinc-900" />
       </BotMessage>
     ),
     text: ({ content, done }) => {
-      if (done) history.done([...history.get(), { role: 'assistant', content }]);
+      if (done)
+        history.done([...history.get(), { role: "assistant", content }]);
 
       return <BotMessage>{content}</BotMessage>;
     },
     tools: {
-      get_crypto_price: {
-        description:
-          "Get the current price of a given cryptocurrency. Use this to show the price to the user.",
+      show_all_products: {
+        description: "This show all the products finded with the product name.",
         parameters: z.object({
-          symbol: z
+          product_name: z
             .string()
-            .describe("The name or symbol of the cryptocurrency. e.g. BTC/ETH/SOL.")
+            .describe(
+              'This is the name of a product or the brand of a product used to compare all the products that stores with that name have. For exmple: "Coca cola", "Queso", "Leche"'
+            ),
+          specific_shop: z
+            .string()
+            .describe(
+              `This is the name of the following stores "La Anónima", "Pingüino", "Libertad" or "Flaming". It may or may not be in the message. It can be written without capital letters or without accents, but you must always show it as in the previous examples.`
+            )
+            .optional(),
         }),
-        generate: async function* ({ symbol }: { symbol: string; }) {
+        generate: async function* ({
+          product_name,
+          specific_shop,
+        }: {
+          product_name: string;
+          specific_shop?: string;
+        }) {
           yield (
-            <BotCard>
-              <PriceSkeleton />
+            <BotCard showAvatar={false}>
+              <ProductsListSkeleton />
             </BotCard>
           );
 
-          const stats = await binance.get24hrChangeStatististics({ symbol: `${symbol}USDT` });
-          // get the last price
-          const price = Number(stats.lastPrice);
-          // extract the delta
-          const delta = Number(stats.priceChange);
-
-          await sleep(1000);
+          const productsByShop = await getAllProducts({
+            query: product_name,
+            specific_shop,
+          });
 
           history.done([
             ...history.get(),
             {
-              role: 'assistant',
-              name: 'get_crypto_price',
-              content: `[Price of ${symbol} = ${price}]`,
+              role: "assistant",
+              name: "show_all_products",
+              content: `Show all the products for ${product_name}`,
             },
           ]);
 
           return (
-            <BotCard>
-              <Price name={symbol} price={price} delta={delta} />
+            <BotCard showAvatar={false}>
+              <ProductsList productsByShop={productsByShop} />
             </BotCard>
           );
         },
       },
-      get_crypto_stats: {
-        description:
-          "Get the current stats of a given cryptocurrency. Use this to show the stats to the user.",
+      analize_products: {
+        description: "This show the products cheapest of each category.",
         parameters: z.object({
-          slug: z
+          product_name: z
             .string()
-            .describe("The full name of the cryptocurrency in lowercase. e.g. bitcoin/ethereum/solana.")
+            .describe(
+              'This is the name of a product or the brand of a product used to compare all the products that stores with that name have. For example: "Coca cola", "Queso", "Leche"'
+            ),
+          request: z
+            .string()
+            .describe(
+              `This will be the customer's request, for example, if the user wants the cheapest Coca Cola, you should retrieve "cheapest"; or if the user asks for the best price/quantity milk, you should retrieve "best price/quality"; or the product more expensive, you should retrieve "expensive"`
+            ),
+          specific_shop: z
+            .string()
+            .describe(
+              `This is the name of the following stores "La Anónima", "Pingüino", "Libertad" or "Flaming". It may or may not be in the message. It can be written without capital letters or without accents, but you must always show it as in the previous examples.`
+            )
+            .optional(),
         }),
-        generate: async function* ({ slug }: { slug: string; }) {
+        generate: async function* ({
+          product_name,
+          request,
+          specific_shop,
+        }: {
+          product_name: string;
+          request: string;
+          specific_shop?: string;
+        }) {
           yield (
             <BotCard>
-              <StatsSkeleton />
+              <BetterProductSkeleton />
             </BotCard>
           );
 
-          const url = new URL("https://api.coinmarketcap.com/data-api/v3/cryptocurrency/detail");
-
-          // set the query params which are required
-          url.searchParams.append("slug", slug);
-          url.searchParams.append("limit", "1");
-          url.searchParams.append("sortBy", "market_cap");
-
-          const response = await fetch(url, {
-            headers: {
-              // set the headers
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              "X-CMC_PRO_API_KEY": env.CMC_API_KEY,
-            }
+          const productsByShop = await getAllProducts({
+            query: product_name,
+            specific_shop,
           });
-
-          if (!response.ok) {
-            return <BotMessage>Crypto not found!</BotMessage>;
-          }
-
-          const res = await response.json() as {
-            data: {
-              id: number;
-              name: string;
-              symbol: string;
-              volume: number;
-              volumeChangePercentage24h: number;
-              statistics: {
-                rank: number;
-                totalSupply: number;
-                marketCap: number;
-                marketCapDominance: number;
-              },
-            };
-          };
-
-          const data = res.data;
-          const stats = res.data.statistics;
-
-          const marketStats = {
-            name: data.name,
-            volume: data.volume,
-            volumeChangePercentage24h: data.volumeChangePercentage24h,
-            rank: stats.rank,
-            marketCap: stats.marketCap,
-            totalSupply: stats.totalSupply,
-            dominance: stats.marketCapDominance,
-          };
-
-          await sleep(1000);
+          const productData = JSON.stringify(productsByShop);
 
           history.done([
             ...history.get(),
             {
-              role: 'assistant',
-              name: 'get_crypto_price',
-              content: `[Stats of ${data.symbol}]`,
+              role: "assistant",
+              name: "analize_products",
+              content: `Analyzing these product lists: ${JSON.stringify(
+                productData
+              )}.`,
             },
           ]);
 
+          const { object } = await generateObject({
+            model: openai("gpt-3.5-turbo"),
+            system: `You are an assistant`,
+            schema: z.object({
+              conclusion: z
+                .string()
+                .describe(
+                  `This is a simple and concise conclusion about what product you should buy and what store it is in. Do not add the full name of the product to this conclusion, just name the short name, e.g. (in the case of product_name "Coca Cola 1.5 liters", the request "cheaper", and the price of the "cheapest" product in each store be [598, 653, 1903, 978]) "The 1.5 liter Coca Cola from La Anónima is the cheapest of all, worth $598.". The conclusion has to name only a product with its price and place where it is purchased.`
+                ),
+              shops: z
+                .array(
+                  z.object({
+                    product: z.object({
+                      id: z.string(),
+                      title: z.string(),
+                      price: z
+                        .string()
+                        .describe("Just the number, without the $ symbol."),
+                      vendor: z.string(),
+                      image: z.string(),
+                      link: z.string(),
+                    }),
+                  })
+                )
+                .describe(`all stores with the ${request} product`),
+            }),
+            prompt: `
+                      Analyze the following products and answer what the product ${request} is for each store: ${JSON.stringify(
+              productData
+            )}.
+Analyze the prices of all the products in each store to determine what the ${request} is.
+ You must respond with the product ${request} from each store, this is very important; of the 4 vendors, you cannot repeat any vendors, you can only show one product from each seller and a maximum of 4, and if possible it must always be this amount, even if you do not find products for any store. Take the price of
+ each product into account to correctly determine the ${request} of each store. 
+ Before drawing the conclusion, you should always analyze and save the product ${request} of each store; and then from these products, we can determine the ${request}. Do not draw a conclusion without knowing the price of all the products.
+If a store does not have the product in question, or it is not a product related to what the user ordered, do not consider that store.
+ Always respond in Spanish.
+                      `,
+          });
+
           return (
             <BotCard>
-              <Stats {...marketStats} />
+              <BetterProduct object={object} />
             </BotCard>
           );
         },
-      }
+      },
     },
     temperature: 0,
   });
 
   return {
     id: Date.now(),
-    role: 'assistant' as const,
+    role: "assistant" as const,
     display: reply.value,
   };
-};
+}
 // Define the AI state and UI state types
 export type AIState = Array<{
   id?: number;
-  name?: 'get_crypto_price' | 'get_crypto_stats';
-  role: 'user' | 'assistant' | 'system';
+  name?: "analize_products" | "show_all_products";
+  role: "user" | "assistant" | "system";
   content: string;
 }>;
 
 export type UIState = Array<{
   id: number;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   display: ReactNode;
   toolInvocations?: ToolInvocation[];
 }>;

@@ -1,45 +1,40 @@
 "use client";
 
 import { ChatList } from "@ai-rsc/components/chat-list";
-import { ChatScrollAnchor } from "@ai-rsc/components/chat-scroll-anchor";
-import { UserMessage } from "@ai-rsc/components/llm-crypto/message";
+import { UserMessage } from "@/components/ui/message";
 import { Button } from "@ai-rsc/components/ui/button";
 import type { ChatInputs } from "@ai-rsc/lib/chat-schema";
 import { useEnterSubmit } from "@ai-rsc/lib/use-enter-submit";
 import { useForm } from "@ai-rsc/lib/use-form";
 import { useActions, useUIState } from "ai/rsc";
-import { ArrowDownIcon, PlusIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowRightIcon,
+  PlusIcon,
+  ShoppingCartIcon,
+} from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { SubmitHandler } from "react-hook-form";
-import TextareaAutosize from 'react-textarea-autosize';
+import TextareaAutosize from "react-textarea-autosize";
 import type { AI } from "./actions";
+import { EmptyScreen } from "@/components/ui/empty-screen";
+import { useCartContext } from "@/context/cart-context";
 
-/*
-  !-- With language models becoming better at reasoning, we believe that there is a future where
-  !-- developers only write core application specific components while models take care of routing
-  !-- them based on the user's state in an application.
-
-  !-- With generative user interfaces, the language model decides which user interface to render
-  !-- based on the user's state in the application, giving users the flexibility to interact with
-  !-- your application in a conversational manner instead of navigating through a series of predefined routes.
-*/
-
-// Here we can read the streamable UI using the sendMessage Server Action via a function call
-// render the returned UI like any other normal React components.
 export default function Home() {
   const [messages, setMessages] = useUIState<typeof AI>();
   const { sendMessage } = useActions<typeof AI>();
   const { formRef, onKeyDown } = useEnterSubmit();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { isOpen, openCart } = useCartContext();
 
   const form = useForm<ChatInputs>();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '/') {
+      if (e.key === "/") {
         if (
           e.target &&
-          ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).nodeName)
+          ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).nodeName)
         ) {
           return;
         }
@@ -51,10 +46,10 @@ export default function Home() {
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [inputRef]);
 
@@ -63,9 +58,7 @@ export default function Home() {
     formRef.current?.reset();
     if (!value) return;
 
-    // Add user message UI
-    setMessages(currentMessages => [
-      ...currentMessages,
+    setMessages([
       {
         id: Date.now(),
         role: "user",
@@ -74,70 +67,141 @@ export default function Home() {
     ]);
 
     try {
-      // Submit and get response message
       const responseMessage = await sendMessage(value);
-      setMessages(currentMessages => [
-        ...currentMessages,
-        responseMessage,
-      ]);
+
+      setMessages((currentMessages) => [...currentMessages, responseMessage]);
     } catch (error) {
-      // You may want to show a toast or trigger an error state.
       console.error(error);
     }
-
   };
+
+  const exampleMessages = [
+    {
+      message: `Muestrame todos los productos de Caramelos`,
+    },
+    {
+      message: `Dónde se encuentra el Vino Rosado más económica?`,
+    },
+    {
+      message: `Quiero el listado de Cervezas en La Anónima`,
+    },
+    {
+      message: `Algún supermercado vende Galletitas?`,
+    },
+  ];
 
   return (
     <main>
-      <div className="pb-[200px] pt-4 md:pt-10">
+      <div className="pb-8 pt-32">
+        {messages.length ? <ChatList messages={messages} /> : <EmptyScreen />}
 
-        <ChatList messages={messages} />
-        <ChatScrollAnchor trackVisibility={true} />
+        {/* <ChatScrollAnchor trackVisibility={true} /> */}
       </div>
-      <div className="fixed inset-x-0 bottom-0 w-full bg-gradient-to-b from-muted/30 from-0% to-muted/30 to-50% duration-300 ease-in-out animate-in dark:from-background/10 dark:from-10% dark:to-background/80 peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]">
-        <div className="mx-auto sm:max-w-2xl sm:px-4">
-          <div className="px-4 flex justify-center flex-col py-2 space-y-4 border-t shadow-lg bg-background sm:rounded-t-xl sm:border md:py-4 bg-white">
-            <form
-              ref={formRef}
-              onSubmit={form.handleSubmit(submitHandler)}
-            >
-              <div className="relative flex flex-col w-full overflow-hidden max-h-60 grow bg-background sm:rounded-md sm:border">
-                <TextareaAutosize
-                  tabIndex={0}
-                  onKeyDown={onKeyDown}
-                  placeholder="Send a message."
-                  className="min-h-[60px] w-full resize-none bg-transparent pl-4 pr-16 py-[1.3rem] focus-within:outline-none sm:text-sm"
-                  autoFocus
-                  spellCheck={false}
-                  autoComplete="off"
-                  autoCorrect="off"
-                  rows={1}
-                  {...form.register('message')}
-                />
-                <div className="absolute right-0 top-4 sm:right-4">
-                  <Button
-                    type="submit"
-                    size="icon"
-                    disabled={form.watch('message') === ''}
-                  >
-                    <ArrowDownIcon className="w-5 h-5" />
-                    <span className="sr-only">Send message</span>
-                  </Button>
-                </div>
+      <div className="fixed z-20 inset-x-0 top-0 pt-8 h-28 w-full bg-white bg-gradient-to-b from-muted/30 from-0% to-muted/30 to-50% duration-300 ease-in-out animate-in dark:from-background/10 dark:from-10% dark:to-background/80 peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]">
+        <div className="mx-auto max-w-2xl px-4">
+          <div className="flex flex-row">
+            <div className="flex justify-center w-full flex-row shadow-lg bg-background rounded-full border p-1 gap-2 bg-white">
+              <div className="flex justify-center items-center">
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="lg"
+                  className="px-3 py-4 bg-background rounded-full border-none"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.reload();
+                  }}
+                >
+                  <PlusIcon className="w-5 h-5" />
+                </Button>
               </div>
-            </form>
-            <Button
-              variant="outline"
-              size="lg"
-              className="p-4 mt-4 rounded-full bg-background"
-              onClick={e => {
-                e.preventDefault();
-                window.location.reload();
-              }}
-            >
-              <PlusIcon className="w-5 h-5" />
-              <span>New Chat</span>
-            </Button>
+              <form
+                ref={formRef}
+                onSubmit={form.handleSubmit(submitHandler)}
+                className="w-full"
+              >
+                <div className="relative flex flex-col w-full overflow-hidden grow bg-background rounded-full">
+                  <TextareaAutosize
+                    tabIndex={0}
+                    onKeyDown={onKeyDown}
+                    placeholder="Envía un mensaje."
+                    className="min-h-[40px] resize-none bg-transparent pl-2 pr-16 py-3 focus-within:outline-none text-sm"
+                    autoFocus
+                    spellCheck={false}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    rows={1}
+                    {...form.register("message")}
+                  />
+                  <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                    <Button
+                      type="submit"
+                      className="rounded-full"
+                      size="icon"
+                      disabled={
+                        form.watch("message") === "" ||
+                        form.watch("message") === undefined
+                      }
+                    >
+                      <ArrowDownIcon className="w-5 h-5" />
+                      <span className="sr-only">Enviar mensaje.</span>
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div className="hidden md:block my-auto w-10 ml-3">
+              <Button
+                className="group px-2.5 border bg-transparent border-indigo-400 hover:border-indigo-600 hover:bg-transparent z-30 rounded-full"
+                disabled={messages.length <= 0}
+                onClick={() => openCart()}
+              >
+                <ShoppingCartIcon className="w-5 h-5 text-indigo-400 group-hover:text-indigo-600 transition-all" />
+              </Button>
+            </div>
+            {messages.length > 0 && (
+              <div className="fixed md:hidden bottom-8 right-5">
+                <Button
+                  className="group bg-indigo-600 hover:bg-indigo-500 z-30 h-16 rounded-full"
+                  onClick={() => openCart()}
+                >
+                  <ShoppingCartIcon className="w-8 h-8 text-white" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 mt-5">
+            {(form.watch("message") === "" ||
+              form.watch("message") === undefined) &&
+              messages.length === 0 &&
+              exampleMessages.map((example, index) => (
+                <div
+                  key={example.message}
+                  className={`flex flex-row items-start gap-2 cursor-pointer bg-white px-4 text-gray-700 hover:text-gray-950 ${
+                    index > 1 && "hidden md:flex"
+                  }`}
+                  onClick={async () => {
+                    setMessages([
+                      {
+                        id: Date.now(),
+                        role: "user",
+                        display: <UserMessage>{example.message}</UserMessage>,
+                      },
+                    ]);
+
+                    const responseMessage = await sendMessage(example.message);
+
+                    setMessages((currentMessages) => [
+                      ...currentMessages,
+                      responseMessage,
+                    ]);
+                  }}
+                >
+                  <ArrowRightIcon className="w-5 h-5 pt-1" />
+                  <p className="font-semibold">{example.message}</p>
+                </div>
+              ))}
           </div>
         </div>
       </div>
