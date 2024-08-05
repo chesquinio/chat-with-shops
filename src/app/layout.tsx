@@ -5,9 +5,9 @@ import { AI } from "./actions";
 import { CartProvider } from "@/context/cart-context";
 import CartPanel from "@/components/ui/cart-panel";
 
-//👇 Configure our font object
 const openSans = Poppins({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  subsets: ["latin"],
 });
 export const metadata: Metadata = {
   title: "Comparador de Productos",
