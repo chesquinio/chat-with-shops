@@ -25,7 +25,7 @@ export default function Home() {
   const { sendMessage } = useActions<typeof AI>();
   const { formRef, onKeyDown } = useEnterSubmit();
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { isOpen, openCart } = useCartContext();
+  const { openCart, cartQuantity } = useCartContext();
 
   const form = useForm<ChatInputs>();
 
@@ -150,7 +150,7 @@ export default function Home() {
                 </div>
               </form>
             </div>
-            <div className="hidden md:block my-auto w-10 ml-3">
+            <div className="hidden relative md:block my-auto w-10 ml-3">
               <Button
                 className="group px-2.5 border bg-transparent border-indigo-400 hover:border-indigo-600 hover:bg-transparent z-30 rounded-full"
                 disabled={messages.length <= 0}
@@ -158,6 +158,11 @@ export default function Home() {
               >
                 <ShoppingCartIcon className="w-5 h-5 text-indigo-400 group-hover:text-indigo-600 transition-all" />
               </Button>
+              {cartQuantity > 0 && (
+                <span className="flex items-center justify-center absolute bg-red-500 rounded-full w-6 h-6 text-sm text-white -bottom-2 -right-2">
+                  {cartQuantity}
+                </span>
+              )}
             </div>
             {messages.length > 0 && (
               <div className="fixed md:hidden bottom-8 right-5">
