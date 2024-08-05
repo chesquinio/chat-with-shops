@@ -1,5 +1,7 @@
 "use server";
 
+export const maxDuration = 30;
+
 import { BotCard, BotMessage } from "@/components/ui/message";
 import { openai } from "@ai-sdk/openai";
 import { generateObject, type CoreMessage, type ToolInvocation } from "ai";
