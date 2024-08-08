@@ -126,7 +126,7 @@ export default function Home() {
                   <TextareaAutosize
                     tabIndex={0}
                     onKeyDown={onKeyDown}
-                    placeholder="Envía un mensaje."
+                    placeholder="Busca un producto."
                     className="min-h-[40px] resize-none bg-transparent pl-2 pr-16 py-3 focus-within:outline-none text-sm"
                     autoFocus
                     spellCheck={false}
@@ -146,7 +146,7 @@ export default function Home() {
                       }
                     >
                       <ArrowDownIcon className="w-5 h-5" />
-                      <span className="sr-only">Enviar mensaje.</span>
+                      <span className="sr-only">Busca un producto.</span>
                     </Button>
                   </div>
                 </div>
@@ -184,6 +184,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 mt-5">
+            <h4 className="text-gray-600 ml-5 mb-2">Puedes intentar con:</h4>
             {(form.watch("message") === "" ||
               form.watch("message") === undefined) &&
               messages.length === 0 &&
@@ -211,7 +212,10 @@ export default function Home() {
                   }}
                 >
                   <ArrowRightIcon className="w-5 h-5 pt-1" />
-                  <p className="font-semibold">{example.message}</p>
+                  <p className="font-semibold relative group">
+                    {example.message}
+                    <span className="hidden md:block absolute left-0 bottom-0 w-0 h-[2px] bg-gray-600 transition-all duration-200 ease-out group-hover:w-full"></span>
+                  </p>
                 </div>
               ))}
           </div>
