@@ -82,7 +82,7 @@ export default function Home() {
       message: `Muestrame todos los productos de Caramelos`,
     },
     {
-      message: `Dónde se encuentra el Vino Blanco más económica?`,
+      message: `Dónde se encuentra el Vino Blanco más económico?`,
     },
     {
       message: `Quiero el listado de Cervezas en La Anónima`,
@@ -184,40 +184,49 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 mt-5">
-            <h4 className="text-gray-600 ml-5 mb-2">Puedes intentar con:</h4>
             {(form.watch("message") === "" ||
               form.watch("message") === undefined) &&
-              messages.length === 0 &&
-              exampleMessages.map((example, index) => (
-                <div
-                  key={example.message}
-                  className={`flex flex-row items-start gap-2 cursor-pointer bg-white px-4 text-gray-700 hover:text-gray-950 ${
-                    index > 1 && "hidden md:flex"
-                  }`}
-                  onClick={async () => {
-                    setMessages([
-                      {
-                        id: Date.now(),
-                        role: "user",
-                        display: <UserMessage>{example.message}</UserMessage>,
-                      },
-                    ]);
+              messages.length === 0 && (
+                <>
+                  <h4 className="text-gray-600 ml-5 mb-2">
+                    Puedes intentar con:
+                  </h4>
+                  {exampleMessages.map((example, index) => (
+                    <div
+                      key={example.message}
+                      className={`flex flex-row items-start gap-2 cursor-pointer bg-white px-4 text-gray-700 hover:text-gray-950 ${
+                        index > 1 && "hidden md:flex"
+                      }`}
+                      onClick={async () => {
+                        setMessages([
+                          {
+                            id: Date.now(),
+                            role: "user",
+                            display: (
+                              <UserMessage>{example.message}</UserMessage>
+                            ),
+                          },
+                        ]);
 
-                    const responseMessage = await sendMessage(example.message);
+                        const responseMessage = await sendMessage(
+                          example.message
+                        );
 
-                    setMessages((currentMessages) => [
-                      ...currentMessages,
-                      responseMessage,
-                    ]);
-                  }}
-                >
-                  <ArrowRightIcon className="w-5 h-5 pt-1" />
-                  <p className="font-semibold relative group">
-                    {example.message}
-                    <span className="hidden md:block absolute left-0 bottom-0 w-0 h-[2px] bg-gray-600 transition-all duration-200 ease-out group-hover:w-full"></span>
-                  </p>
-                </div>
-              ))}
+                        setMessages((currentMessages) => [
+                          ...currentMessages,
+                          responseMessage,
+                        ]);
+                      }}
+                    >
+                      <ArrowRightIcon className="w-5 h-5 pt-1" />
+                      <p className="font-semibold relative group">
+                        {example.message}
+                        <span className="hidden md:block absolute left-0 bottom-0 w-0 h-[2px] bg-gray-600 transition-all duration-200 ease-out group-hover:w-full"></span>
+                      </p>
+                    </div>
+                  ))}
+                </>
+              )}
           </div>
         </div>
       </div>
