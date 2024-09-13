@@ -38,7 +38,7 @@ export async function sendMessage(message: string): Promise<{
   history.update([...recentMessages, { role: "user", content: message }]);
 
   const reply = await streamUI({
-    model: openai("gpt-3.5-turbo"),
+    model: openai("gpt-4o-mini"),
     messages: [
       {
         role: "system",
@@ -161,7 +161,7 @@ export async function sendMessage(message: string): Promise<{
           ]);
 
           const { object } = await generateObject({
-            model: openai("gpt-3.5-turbo"),
+            model: openai("gpt-4o-mini"),
             system: `You are an assistant`,
             schema: z.object({
               conclusion: z
